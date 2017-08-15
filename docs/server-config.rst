@@ -40,6 +40,24 @@ and add it to server logs using the following snippets:
                           '$status $body_bytes_sent "$http_referer" '
                           '"$http_user_agent" "$http_x_forwarded_for" '
                           'request_id=$request_id';
+
+        init_worker_by_lua_block {
+            -- Solution that should work on any OS, but might not
+            -- be random enough:
+            -- math.randomseed(os.time())
+
+            -- Solution that should work on Unix-like systems
+            -- Random number up to 4294967296 (256^4)
+            local urandom = assert(io.open("/dev/urandom", "rb"))
+            local seed = urandom:read(4)
+            urandom:close()
+            local seed_as_number = 0
+            for i = 1, #seed do
+              seed_as_number = 256 * seed_as_number + seed:byte(i)
+            end
+            math.randomseed(seed_as_number)
+        }
+
         ...
     }
 
